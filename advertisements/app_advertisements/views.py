@@ -1,8 +1,14 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import HttpResponse
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Q
+
 from .models import Advertisement
 from .forms import AdvertisementForm
+
+
+User = get_user_model()
 
 
 def index(request):
@@ -12,7 +18,12 @@ def index(request):
 
 
 def top_sellers(request):
-    return render(request, 'app_advertisements/top-sellers.html')
+    users = User.objects.annotate(
+        count=Count('advertisement')
+    ).filter(~Q(count=0)).order_by('-count')
+
+    context = {'users': users}
+    return render(request, 'app_advertisements/top-sellers.html', context)
 
 
 def advertisement_post(request):
